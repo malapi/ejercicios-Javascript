@@ -6,8 +6,14 @@ import basededatos from './basededatos.js';
 */
 export const promedioAnioEstreno = () => {
     // Ejemplo de como accedo a datos dentro de la base de datos
-    // console.log(basededatos.peliculas);
-    return [];
+     //console.log(basededatos.peliculas);
+     //console.log("Cantidad de Peliculas "+basededatos.peliculas.length);
+     var acumulador = 0;
+     for(let unaPelicula of basededatos.peliculas){
+        acumulador +=unaPelicula.anio;
+      }
+     
+    return [acumulador/basededatos.peliculas.length];
 };
 
 /**
@@ -16,7 +22,18 @@ export const promedioAnioEstreno = () => {
 * @param {number} promedio
   */
 export const pelicuasConCriticaPromedioMayorA = (promedio) => {
-    return [];
+    //console.log("Valor que ingresa: "+promedio);
+    //console.log(basededatos.calificaciones);
+    var lista = []
+   for(let una of basededatos.peliculas){
+       var elpromedio =promedioDeCriticaBypeliculaId(una.id);
+       if( elpromedio[0] > promedio){
+            una.promedio = elpromedio[0];
+            lista.push(una);
+       }
+   }
+   
+    return [lista];
 };
 
 /**
@@ -24,15 +41,67 @@ export const pelicuasConCriticaPromedioMayorA = (promedio) => {
 * @param {string} nombreDirector
 */
 export const peliculasDeUnDirector = (nombreDirector) => {
+    var elDirector = directorByNombre(nombreDirector);
+    //console.log(elDirector);
+    var lista = [];
+    if (elDirector.length>0){
+        for(let un of basededatos.peliculas){
+            if(un.directores.indexOf(elDirector[0].id) !== -1){
+                lista.push(un);
+            } 
+        }
+    }
+    return lista;
+};
+
+
+export const directorByNombre = (nombreDirector) => {
+    for(let un of basededatos.directores){
+        if(un.nombre.includes(nombreDirector)){
+            return [un]
+        }
+    }
     return [];
 };
 
+export const directorById = (idDirector) => {
+    for(let un of basededatos.directores){
+        if(un.id == idDirector){
+            return un
+        }
+    }
+    return undefined;
+};
+
+export const generoById = (idGenero) => {
+    for(let un of basededatos.generos){
+        if(un.id == idGenero){
+            return un
+        }
+    }
+    return undefined;
+};
 /**
 * Devuelve el promdedio de critica segun el id de la pelicula.
 * @param {number} peliculaId
 */
 export const promedioDeCriticaBypeliculaId = (peliculaId) => {
-    return [];
+    var acumulador = 0;
+    var cantidad = 0;
+    var promedio =0;
+    for(let una of basededatos.calificaciones){
+        if(una.pelicula == peliculaId){
+            cantidad++;
+            acumulador +=una.puntuacion;
+        }
+      }
+
+      if (cantidad > 0 ){
+        promedio = acumulador/cantidad
+      } else {
+        promedio=0;
+      }
+    return [promedio];
 };
 
 /**
@@ -67,11 +136,67 @@ export const promedioDeCriticaBypeliculaId = (peliculaId) => {
         },
     ],
  */
+
+export const peliculaById = (idPelicula) => {
+        for(let un of basededatos.peliculas){
+            if(un.id == idPelicula ){
+                return un
+            }
+        }
+        return undefined;
+};
+
+export const peliculaByNombre = (nombrePelicula) => {
+    for(let un of basededatos.peliculas){
+        if(un.nombre.includes(nombrePelicula)){
+            return un
+        }
+    }
+    return undefined;
+};
 export const obtenerPeliculasConPuntuacionExcelente = () => {
     // Ejemplo de como accedo a datos dentro de la base de datos
     // console.log(basededatos.peliculas);
-    return [];
+    var lista = [];
+    basededatos.calificaciones.forEach(una => {
+        if(una.puntuacion >= 9){
+             var elem = peliculaById(una.pelicula);
+             if(elem != undefined){
+                lista.push(elem)
+             }
+
+
+        }
+        
+      });
+    return lista;
 };
+
+export const criticoById =(idCritico) => {
+    for(let uno of basededatos.criticos){
+       // console.log("Id  "+uno.id+" = : "+idCritico)
+        if(uno.id == idCritico){
+           // console.log("Lo encontre  "+uno.id+" = : "+idCritico)
+            return uno;
+        }
+    }; 
+    return undefined;
+}
+export const criticosByPeliculaId = (idPelicula) => {
+    var lista =[];
+    basededatos.calificaciones.forEach(una => {
+        if(una.pelicula == idPelicula){
+            var uno = criticoById(una.critico);
+            if(uno != undefined){
+                uno.puntuacion = una.puntuacion;
+                //console.log(uno)
+                lista.push(uno);
+            }
+            
+        }
+    });
+    return lista;
+}
 
 /**
  * Devuelve informacion ampliada sobre una pelicula.
@@ -121,5 +246,22 @@ export const obtenerPeliculasConPuntuacionExcelente = () => {
  * @param {string} nombrePelicula
  */
 export const expandirInformacionPelicula = (nombrePelicula) => {
-    return {};
+    var lapelicula = peliculaByNombre(nombrePelicula);
+    if(lapelicula != undefined){
+        var lista = [];
+        lapelicula.directores.forEach(eldirector => {
+            lista.push(directorById(eldirector));
+          });
+          lapelicula.directores = lista;
+
+          var lista = [];
+          lapelicula.generos.forEach(elGenero => {
+              lista.push(generoById(elGenero));
+            });
+            lapelicula.generos = lista;
+
+            lapelicula.criticas = criticosByPeliculaId(lapelicula.id);
+        
+    }
+    return {lapelicula};
 };
